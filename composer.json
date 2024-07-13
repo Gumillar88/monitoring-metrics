@@ -1,0 +1,14 @@
+{
+    "name": "glw/monitoring-metrics",
+    "description": "A PHP library to monitor and track user activities such as clicks, page views, and downloads.",
+    "type": "library",
+    "require": {
+        "php": ">=7.4",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Glw\\MonitoringMetrics\\": "src/"
+        }
+    }
+}
