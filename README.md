@@ -11,3 +11,6 @@ Monitoring Metrics is a Component library designed to help you monitor and track
 ## Installation
 
 Install via Composer:
+
+```bash
+composer require glw/monitoring-metrics
