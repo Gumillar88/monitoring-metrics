@@ -10,5 +10,6 @@
         "psr-4": {
             "Glw\\MonitoringMetrics\\": "src/"
         }
-    }
+    },
+    "license": "MIT"
 }
