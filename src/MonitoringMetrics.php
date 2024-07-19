@@ -9,6 +9,7 @@ class MonitoringMetrics
 {
     protected $client;
     protected $apiUrl;
+    protected $apiToken;
 
     public function __construct()
     {
@@ -16,6 +17,7 @@ class MonitoringMetrics
         $dotenv->load();
         
         $this->apiUrl = getenv('API_METRICS_URL');
+        $this->apiToken = getenv('API_TOKEN');
         $this->client = new Client();
     }
 
@@ -40,6 +42,9 @@ class MonitoringMetrics
             'json' => [
                 'type' => $type,
                 'value' => $value,
+            ],
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->apiToken,
             ]
         ]);
 
@@ -50,5 +55,35 @@ class MonitoringMetrics
     {
         // Fungsi helper untuk mendapatkan nilai metrics
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    }
+
+    public function _getBaseAPI($url)
+    {
+        $api_url = $url;
+        $ch = curl_init();
+        
+        // Header Authorization
+        $headers = [
+            'Authorization: Bearer '.$this->apiToken.'',
+        ];
+
+        curl_setopt($ch, CURLOPT_URL, $api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);  // Menambahkan header Authorization
+
+        $response = curl_exec($ch);
+        
+        if (curl_errno($ch)) {
+            echo 'Error API: ' . curl_error($ch);
+            $data = array();
+        } else {
+            $data = json_decode($response, true);
+        }
+
+        // Tutup sesi cURL
+        curl_close($ch);
+
+        return $data;
     }
 }
