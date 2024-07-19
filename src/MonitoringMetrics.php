@@ -3,14 +3,19 @@
 namespace Glw\MonitoringMetrics;
 
 use GuzzleHttp\Client;
+use Dotenv\Dotenv;
 
 class MonitoringMetrics
 {
     protected $client;
-    protected $apiUrl = 'https://api-metrics.kitatechsolution.com';
+    protected $apiUrl;
 
     public function __construct()
     {
+        $dotenv = Dotenv::createImmutable(__DIR__.'/../');
+        $dotenv->load();
+        
+        $this->apiUrl = getenv('API_METRICS_URL');
         $this->client = new Client();
     }
 
