@@ -2,8 +2,9 @@
 
 namespace Glw\MonitoringMetrics;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+
 use Dotenv\Dotenv;
 
 class MonitoringMetrics
@@ -39,6 +40,7 @@ class MonitoringMetrics
 
     protected function sendData($type, $value)
     {
+        $client = HttpClient::create();
         $url = $this->apiUrl . 'track';
 
         $postData = [
@@ -47,32 +49,27 @@ class MonitoringMetrics
         ];
 
         $headers = [
-            'Authorization: Bearer ' . $this->apiToken,
-            'Content-Type: application/json'
+            'Authorization' => 'Bearer ' . $this->apiToken,
+            'Content-Type' => 'application/json'
         ];
-        $ch = curl_init($url);
-        
 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        try {
+            $response = $client->request('POST', $url, [
+                'json' => $postData,
+                'headers' => $headers,
+            ]);
 
-        $response = curl_exec($ch);
+            $statusCode = $response->getStatusCode();
+            $content = $response->getContent();
 
-        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        // dd($statusCode);
-        if (curl_errno($ch)) {
-            error_log('cURL error: ' . curl_error($ch));
+            error_log('Response status: ' . $statusCode);
+            error_log('Response body: ' . $content);
+
+            return $statusCode === 200;
+        } catch (ExceptionInterface $e) {
+            error_log('HttpClient error: ' . $e->getMessage());
             return false;
         }
-
-        curl_close($ch);
-
-        error_log('Response status: ' . $statusCode);
-        error_log('Response body: ' . $response);
-
-        return $statusCode === 200;
     }
 
     public function _getValueMetrics($value)
