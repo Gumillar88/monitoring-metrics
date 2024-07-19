@@ -3,6 +3,7 @@
 namespace Glw\MonitoringMetrics;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Dotenv\Dotenv;
 
 class MonitoringMetrics
@@ -16,9 +17,9 @@ class MonitoringMetrics
         $dotenv = Dotenv::createImmutable(__DIR__.'/../');
         $dotenv->load();
         
-        $this->apiUrl = getenv('API_METRICS_URL');
-        $this->apiToken = getenv('API_TOKEN');
         $this->client = new Client();
+        $this->apiUrl = rtrim(getenv('API_METRICS_URL'), '/') . '/';
+        $this->apiToken = getenv('API_TOKEN_METRICS');
     }
 
     public function trackClick($elementId)
@@ -28,7 +29,7 @@ class MonitoringMetrics
 
     public function trackPageView($page)
     {
-        $this->sendData('page_view', $page);
+        $this->sendData('view', $page);
     }
 
     public function trackDownload($filePath)
@@ -38,22 +39,44 @@ class MonitoringMetrics
 
     protected function sendData($type, $value)
     {
-        $response = $this->client->post($this->apiUrl . '/track', [
-            'json' => [
-                'type' => $type,
-                'value' => $value,
-            ],
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->apiToken,
-            ]
-        ]);
+        $url = $this->apiUrl . 'track';
 
-        return $response->getStatusCode() === 200;
+        $postData = [
+            'type' => $type,
+            'value' => $value
+        ];
+
+        $headers = [
+            'Authorization: Bearer ' . $this->apiToken,
+            'Content-Type: application/json'
+        ];
+        $ch = curl_init($url);
+        
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $response = curl_exec($ch);
+
+        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        // dd($statusCode);
+        if (curl_errno($ch)) {
+            error_log('cURL error: ' . curl_error($ch));
+            return false;
+        }
+
+        curl_close($ch);
+
+        error_log('Response status: ' . $statusCode);
+        error_log('Response body: ' . $response);
+
+        return $statusCode === 200;
     }
 
     public function _getValueMetrics($value)
     {
-        // Fungsi helper untuk mendapatkan nilai metrics
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 
@@ -64,7 +87,7 @@ class MonitoringMetrics
         
         // Header Authorization
         $headers = [
-            'Authorization: Bearer '.$this->apiToken.'',
+            'Authorization: Bearer '.$this->apiToken,
         ];
 
         curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -73,10 +96,9 @@ class MonitoringMetrics
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);  // Menambahkan header Authorization
 
         $response = curl_exec($ch);
-        
         if (curl_errno($ch)) {
-            echo 'Error API: ' . curl_error($ch);
-            $data = array();
+            error_log('Error API: ' . curl_error($ch));
+            $data = [];
         } else {
             $data = json_decode($response, true);
         }
