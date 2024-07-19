@@ -18,7 +18,6 @@ class MonitoringMetrics
         $dotenv = Dotenv::createImmutable(__DIR__.'/../');
         $dotenv->load();
         
-        $this->client = new Client();
         $this->apiUrl = rtrim(getenv('API_METRICS_URL'), '/') . '/';
         $this->apiToken = getenv('API_TOKEN_METRICS');
     }
@@ -40,36 +39,47 @@ class MonitoringMetrics
 
     protected function sendData($type, $value)
     {
-        $client = HttpClient::create();
-        $url = $this->apiUrl . 'track';
+        $ch = curl_init($this->apiUrl.'track');
 
-        $postData = [
-            'type' => $type,
-            'value' => $value
+        $data = [
+            'type' => 'view',
+            'value' => $value,
         ];
 
         $headers = [
-            'Authorization' => 'Bearer ' . $this->apiToken,
-            'Content-Type' => 'application/json'
+            'Authorization: Bearer '.$this->apiToken,
+            'Content-Type: application/json',
         ];
 
-        try {
-            $response = $client->request('POST', $url, [
-                'json' => $postData,
-                'headers' => $headers,
-            ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_VERBOSE, true);  // Enable verbose output
+        curl_setopt($ch, CURLOPT_HEADER, true);   // Include headers in output
 
-            $statusCode = $response->getStatusCode();
-            $content = $response->getContent();
+        $response = curl_exec($ch);
+        
+        if ($response === false) {
+            error_log('cURL error: ' . curl_error($ch));
+        } else {
+            // Split headers and body
+            $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header = substr($response, 0, $header_size);
+            $body = substr($response, $header_size);
 
-            error_log('Response status: ' . $statusCode);
-            error_log('Response body: ' . $content);
-
-            return $statusCode === 200;
-        } catch (ExceptionInterface $e) {
-            error_log('HttpClient error: ' . $e->getMessage());
-            return false;
+            // Log headers and body separately
+            error_log('Response Headers: ' . $header);
+            error_log('Response Body: ' . $body);
         }
+
+        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($statusCode != 200) {
+            error_log('Error: HTTP status code ' . $statusCode);
+        }
+
+        curl_close($ch);
     }
 
     public function _getValueMetrics($value)
