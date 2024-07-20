@@ -12,6 +12,7 @@ class MonitoringMetrics
     protected $client;
     protected $apiUrl;
     protected $apiToken;
+    protected $projectID;
 
     public function __construct()
     {
@@ -20,24 +21,156 @@ class MonitoringMetrics
         
         $this->apiUrl = rtrim(getenv('API_METRICS_URL'), '/') . '/';
         $this->apiToken = getenv('API_TOKEN_METRICS');
+        $this->projectID = getenv('PROJECT_ID');
     }
 
-    public function trackClick($elementId)
+    public function trackClick()
     {
-        $this->sendData('click', $elementId);
+        $action = 'click';
+        $method = 'GET';
+        $project_id = $this->projectID;
+
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+        
+        $this->sendData($action, $get_traffic);
     }
 
-    public function trackPageView($page)
+    public function trackPageView()
     {
-        $this->sendData('view', $page);
+        $action = 'view';
+        $method = 'GET';
+        $project_id = $this->projectID;
+        
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+
+        $this->sendData($action, $get_traffic);
     }
 
-    public function trackDownload($filePath)
+    public function trackDownload($data)
     {
-        $this->sendData('download', $filePath);
+        $action = 'download';
+        $method = 'GET';
+        $project_id = $this->projectID;
+
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+
+        $this->sendData($action, $get_traffic);
+    }
+
+    public function trackCreate()
+    {
+        $action = 'create';
+        $method = 'GET';
+        $project_id = $this->projectID;
+
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+        
+        $this->sendData($action, $get_traffic);
+    }
+
+    public function trackSave()
+    {
+        $action = 'save';
+        $method = 'POST';
+        $project_id = $this->projectID;
+
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+        
+        $this->sendData($action, $get_traffic);
+    }
+
+    public function trackReports()
+    {
+        $action = 'reports';
+        $method = 'GET';
+        $project_id = $this->projectID;
+
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+        
+        $this->sendData($action, $get_traffic);
+    }
+
+    public function trackEdit()
+    {
+        $action = 'edit';
+        $method = 'GET';
+        $project_id = $this->projectID;
+
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+
+        $this->sendData($action, $get_traffic);
+    }
+
+    public function trackUpdate()
+    {
+        $action = 'update';
+        $method = 'POST';
+        $project_id = $this->projectID;
+
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+
+        $this->sendData($action, $get_traffic);
+    }
+
+    public function trackDelete()
+    {
+        $action = 'delete';
+        $method = 'POST';
+        $project_id = $this->projectID;
+
+        $get_traffic = $this->_getDataTraffic($action, $method, $project_id);
+
+        $this->sendData($action, $get_traffic);
     }
 
     protected function sendData($type, $value)
+    {
+        $this->_getBaseAPI($type, $value);
+    }
+
+    public function _getValueMetrics($value)
+    {
+        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    }
+
+    public function _getDataTraffic($action, $method, $project_id)
+    {
+        $data = [
+            'timestamp'         => date('Y-m-d H:i:s'),
+            'project_id'        => $project_id,
+            'method'            => $method,
+            'action'            => $action,
+            'activity_url'      => url()->current(),
+            'ip_address'        => $this->get_client_ip(),
+        ];
+
+        return $data;
+    }
+
+    public function get_client_ip() {
+        
+        $ipaddress = '';
+        
+        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
+            $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+        } else if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } else if (isset($_SERVER['HTTP_X_FORWARDED'])) {
+            $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+        } else if (isset($_SERVER['HTTP_FORWARDED_FOR'])) {
+            $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+        } else if (isset($_SERVER['HTTP_FORWARDED'])) {
+            $ipaddress = $_SERVER['HTTP_FORWARDED'];
+        } else if (isset($_SERVER['REMOTE_ADDR'])) {
+            $ipaddress = $_SERVER['REMOTE_ADDR'];
+        } else {
+            $ipaddress = 'UNKNOWN';
+        }
+
+        return $ipaddress;
+    }
+
+    public function _getBaseAPI($type, $value)
     {
         $ch = curl_init($this->apiUrl.'track');
 
@@ -80,39 +213,7 @@ class MonitoringMetrics
         }
 
         curl_close($ch);
-    }
 
-    public function _getValueMetrics($value)
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
-
-    public function _getBaseAPI($url)
-    {
-        $api_url = $url;
-        $ch = curl_init();
-        
-        // Header Authorization
-        $headers = [
-            'Authorization: Bearer '.$this->apiToken,
-        ];
-
-        curl_setopt($ch, CURLOPT_URL, $api_url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);  // Menambahkan header Authorization
-
-        $response = curl_exec($ch);
-        if (curl_errno($ch)) {
-            error_log('Error API: ' . curl_error($ch));
-            $data = [];
-        } else {
-            $data = json_decode($response, true);
-        }
-
-        // Tutup sesi cURL
-        curl_close($ch);
-
-        return $data;
+        return $statusCode;
     }
 }
