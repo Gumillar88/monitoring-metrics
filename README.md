@@ -1,6 +1,6 @@
 # monitoring-metrics
 
-Monitoring Metrics is a Component library designed to help you monitor and track various user activities on your website or application. This library enables you to easily capture and log metrics such as the number of clicks, page views, and downloads. 
+Monitoring Metrics is a Component library designed to help you monitor and track various user activities on your website or application. This library enables you to easily capture and log metrics such as the number of clicks, reports, page views, and downloads. 
 
 ## Features
 
