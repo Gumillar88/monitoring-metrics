@@ -36,12 +36,12 @@ class MonitoringMetrics
         $this->sendData($action, $get_traffic);
     }
 
-    public function trackPageView()
+    public function trackPageView($get_function)
     {
         $action = 'view';
         $method = 'GET';
         $project_id = $this->projectID;
-        $function = 'trackPageView()';
+        $function = $get_function;
         
         $get_traffic = $this->_getDataTraffic($action, $method, $project_id, $function);
 
