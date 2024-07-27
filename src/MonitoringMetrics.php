@@ -48,7 +48,7 @@ class MonitoringMetrics
         $this->sendData($action, $get_traffic);
     }
 
-    public function trackDownload($data)
+    public function trackDownload()
     {
         $action = 'download';
         $method = 'GET';
