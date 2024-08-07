@@ -1,17 +1,16 @@
 {
-    "name": "glw/monitoring-metrics",
-    "description": "A PHP library to monitor and track user activities such as clicks, page views, and downloads.",
+    "name": "glw/auto-refresh",
+    "description": "A PHP library for auto-refreshing the browser using WebSocket.",
     "type": "library",
-    "require": {
-        "php": ">=7.3",
-        "guzzlehttp/guzzle": "^7.0",
-        "vlucas/phpdotenv": "^5.6",
-        "symfony/http-client": "^5.4"
-    },
     "autoload": {
         "psr-4": {
-            "Glw\\MonitoringMetrics\\": "src/"
+            "Glw\\AutoRefresh\\": "src/"
         }
     },
-    "license": "MIT"
+    "license": "MIT",
+    "require": {
+        "cboden/ratchet": "^0.4.3"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
